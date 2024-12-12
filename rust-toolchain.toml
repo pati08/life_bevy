@@ -1,0 +1,5 @@
+[toolchain]
+channel = "nightly-2024-12-11"
+components = [ "rustfmt", "rust-analyzer", "rust-src", "rustc-codegen-cranelift-preview" ]
+targets = [ "x86_64-unknown-linux-gnu" ]
+profile = "default"
