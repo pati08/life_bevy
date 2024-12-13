@@ -851,6 +851,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_pancam"
+version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "76ff1e57407ba1b29131ba78643cfec8cbd965239ab994e4ab4ac1cfe509e454"
+dependencies = [
+ "bevy",
+]
+
+[[package]]
 name = "bevy_pbr"
 version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2547,6 +2556,7 @@ name = "life"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "bevy_pancam",
  "hashbrown 0.15.2",
  "log",
 ]
