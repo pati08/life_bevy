@@ -2,11 +2,13 @@ use std::time::{Duration, Instant};
 
 use bevy::{
     diagnostic::FrameTimeDiagnosticsPlugin,
+    image::{ImageLoaderSettings, ImageSampler},
     prelude::*,
-    render::render_resource::AsBindGroup,
     utils::hashbrown::{HashMap, HashSet},
 };
 use bevy_pancam::{PanCam, PanCamPlugin};
+
+mod bg;
 
 fn main() {
     let mut app = App::new();
@@ -36,21 +38,10 @@ fn main() {
 }
 
 const LIVE_SPRITE: &str = "sprites/live.png";
-const BACKGROUND_SHADER: &str = "shaders/bg_shader.wgsl";
+const BACKGROUND_SHADER: &str = "shaders/bg.wgsl";
 
 #[derive(Resource)]
 struct ClickedAt(Option<Instant>);
-
-#[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
-struct BackgroundMaterial {
-    #[uniform(0)]
-    offset: [f32; 4],
-    #[uniform(1)]
-    grid_size: [f32; 4],
-    #[texture(2)]
-    #[sampler(3)]
-    color_texture: Handle<Image>,
-}
 
 fn step(
     keycode: Res<ButtonInput<KeyCode>>,
@@ -88,7 +79,16 @@ fn step(
     for (shape, pos) in shapes {
         commands.spawn((
             Mesh2d(shape),
-            MeshMaterial2d(materials.add(asset_server.load(LIVE_SPRITE))),
+            MeshMaterial2d(
+                materials.add(
+                    asset_server.load_with_settings(
+                        LIVE_SPRITE,
+                        |settings: &mut ImageLoaderSettings| {
+                            settings.sampler = ImageSampler::nearest()
+                        },
+                    ),
+                ),
+            ),
             Transform::from_xyz(pos.x as f32 * 50., pos.y as f32 * 50., 0.0),
             pos,
         ));
@@ -128,6 +128,7 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     asset_server: Res<AssetServer>,
+    window: Single<&Window>,
 ) {
     let shapes = cells
         .0
@@ -136,13 +137,26 @@ fn setup(
     for (shape, pos) in shapes {
         commands.spawn((
             Mesh2d(shape),
-            MeshMaterial2d(materials.add(asset_server.load(LIVE_SPRITE))),
+            MeshMaterial2d(
+                materials.add(
+                    asset_server.load_with_settings(
+                        LIVE_SPRITE,
+                        |settings: &mut ImageLoaderSettings| {
+                            settings.sampler = ImageSampler::nearest()
+                        },
+                    ),
+                ),
+            ),
             Transform::from_xyz(pos.x as f32 * 50., pos.y as f32 * 50., 0.0),
             pos,
         ));
     }
-    commands.spawn((Camera2d, PanCam::default()));
+
+    commands.spawn((Camera2d, PanCam::default(), MainCamera));
 }
+
+#[derive(Component)]
+struct MainCamera;
 
 fn toggle(
     mb: Res<ButtonInput<MouseButton>>,
@@ -151,7 +165,7 @@ fn toggle(
     mut commands: Commands,
     mut cells: ResMut<LivingCellLocations>,
     window: Single<&Window>,
-    camera_query: Single<(&Camera, &GlobalTransform)>,
+    camera_query: Single<(&Camera, &GlobalTransform), With<MainCamera>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     asset_server: Res<AssetServer>,
@@ -185,7 +199,12 @@ fn toggle(
                 let shape = meshes.add(Rectangle::new(50., 50.));
                 commands.spawn((
                     Mesh2d(shape),
-                    MeshMaterial2d(materials.add(asset_server.load(LIVE_SPRITE))),
+                    MeshMaterial2d(materials.add(asset_server.load_with_settings(
+                        LIVE_SPRITE,
+                        |settings: &mut ImageLoaderSettings| {
+                            settings.sampler = ImageSampler::nearest()
+                        },
+                    ))),
                     Transform::from_xyz(cell.x as f32 * 50., cell.y as f32 * 50., 0.0),
                     cell,
                 ));
